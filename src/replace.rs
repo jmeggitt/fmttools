@@ -1,6 +1,23 @@
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter, Write};
 
+/// Replace a given pattern while formatting a value. No allocation is performed as
+/// part of this operation.
+/// ```rust
+/// use fmttools::replace;
+///
+/// #[derive(Debug)]
+/// struct FooBar {
+///     a: String,
+/// }
+///
+/// let value = FooBar { a: "Bar".to_string() };
+/// assert_eq!("FooBiz { a: \"Biz\" }", format!("{:?}", replace(&value, "Bar", "Biz")));
+/// ```
+/// ## Note
+/// The current implementation uses a relatively naive backtracking approach to string replacement
+/// and is only intended for small to medium inputs. For large inputs, you will likely see better
+/// performance using the standard library implementations.
 #[inline]
 pub fn replace<T, P>(value: T, pattern: P, replacement: &str) -> Replace<T, P> {
     Replace {

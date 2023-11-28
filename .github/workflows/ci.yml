@@ -7,6 +7,11 @@ on:
   merge_group:
     paths-ignore:
       - "**.md"
+  push:
+    paths-ignore:
+      - "**.md"
+    branches:
+      - master
 
 jobs:
   clippy:

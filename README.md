@@ -1,4 +1,7 @@
 # Fmttools
+[![build_status](https://github.com/jmeggitt/fmttools/actions/workflows/ci.yml/badge.svg)](https://github.com/jmeggitt/fmttools/actions)
+[![crates.io](https://img.shields.io/crates/v/fmttools.svg)](https://crates.io/crates/fmttools)
+
 Tools for efficient modification of text as part of a single `write!` call.
  - **No allocation is performed**
  - **Implemented using only safe Rust**

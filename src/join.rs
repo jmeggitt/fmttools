@@ -7,6 +7,27 @@ pub struct Join<I, S> {
     separator: S,
 }
 
+/// Joins iterator elements together with a given separator. Formatting is only performed during
+/// [Debug::fmt] or [Display::fmt].
+/// ```rust
+/// use fmttools::join;
+///
+/// let elements = vec![1, 2, 3, 4, 5];
+/// assert_eq!("1:2:3:4:5", format!("{}", join(&elements, ':')));
+/// ```
+///
+/// ## Note
+/// Elements are formatted according to either their debug or display implementations. Format string
+/// arguments are not passed to elements.
+/// ```rust
+/// use fmttools::join;
+///
+/// let elements = vec!["abc", "\n", "123"];
+/// assert_eq!("abc, \n, 123", format!("{}", join(&elements, ", ")));
+/// assert_eq!("\"abc\", \"\\n\", \"123\"", format!("{:?}", join(&elements, ", ")));
+/// ```
+///
+/// See [join_fmt] and [join_fmt_all] for additional control over element and separator formatting.
 #[inline]
 pub fn join<I: IntoIterator, S: Display>(iter: I, separator: S) -> Join<I::IntoIter, S> {
     Join {
@@ -79,12 +100,33 @@ where
     }
 }
 
+/// Joins iterator elements together with a given separator. Formatting is only performed during
+/// [Debug::fmt] or [Display::fmt].
+/// ```rust
+/// # use std::fmt;
+/// # use std::fmt::Formatter;
+/// use fmttools::join_fmt;
+///
+/// // Alternatively, a closure can be used
+/// fn format_element(x: &i32, f: &mut Formatter<'_>) -> fmt::Result {
+///     if *x > 3 {
+///         return write!(f, "3+");
+///     }
+///
+///     write!(f, "{}", x)
+/// }
+///
+/// let elements = vec![1, 2, 3, 4, 5];
+/// assert_eq!("1, 2, 3, 3+, 3+", format!("{}", join_fmt(&elements, ", ", format_element)));
+/// ```
+/// See [join] to format elements according to their [Debug] or [Display] implementations. See
+/// [join_fmt_all] for additional control over formatting element separators.
 #[inline]
-pub fn join_fmt<I, F, S>(iter: I, fmt_item: F, separator: S) -> JoinFmt<I::IntoIter, F, S>
+pub fn join_fmt<I, S, F>(iter: I, separator: S, fmt_item: F) -> JoinFmt<I::IntoIter, F, S>
 where
     I: IntoIterator,
-    F: FnMut(I::Item, &mut Formatter<'_>) -> fmt::Result,
     S: Display,
+    F: FnMut(I::Item, &mut Formatter<'_>) -> fmt::Result,
 {
     let inner = JoinFmtInner {
         iter: iter.into_iter(),
@@ -139,16 +181,42 @@ where
     }
 }
 
+/// Joins iterator elements together while formatting using the specified formatting functions for
+/// elements and separators. Formatting is only performed during [Display::fmt].
+/// ```rust
+/// # use std::fmt;
+/// # use std::fmt::Formatter;
+/// use fmttools::join_fmt_all;
+///
+/// fn format_element(x: &i32, f: &mut Formatter<'_>) -> fmt::Result {
+///     write!(f, "({})", x)
+/// }
+///
+/// let mut positive = true;
+/// let format_separator = |f: &mut Formatter<'_>| {
+///     positive = !positive;
+///     if positive {
+///         write!(f, " + ")
+///     } else {
+///         write!(f, " - ")
+///     }
+/// };
+///
+/// let elements = vec![1, 2, 3, 4, 5];
+/// assert_eq!("(1) - (2) + (3) - (4) + (5)", format!("{}", join_fmt_all(&elements, format_separator, format_element)));
+/// ```
+/// See [join] to format elements according to their [Debug] or [Display] implementations. See
+/// [join_fmt] is separator format control is not required.
 #[inline]
-pub fn join_fmt_all<I, F, S>(
+pub fn join_fmt_all<I, S, F>(
     iter: I,
-    fmt_item: F,
     fmt_separator: S,
+    fmt_item: F,
 ) -> JoinFmtAll<I::IntoIter, F, S>
 where
     I: IntoIterator,
-    F: FnMut(I::Item, &mut Formatter<'_>) -> fmt::Result,
     S: FnMut(&mut Formatter<'_>) -> fmt::Result,
+    F: FnMut(I::Item, &mut Formatter<'_>) -> fmt::Result,
 {
     let inner = JoinFmtAllInner {
         iter: iter.into_iter(),

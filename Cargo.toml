@@ -5,9 +5,9 @@ edition = "2018"
 license = "MIT OR Apache-2.0"
 authors = ["Jasper Meggitt <jasper.meggitt@gmail.com>"]
 repository = "https://github.com/jmeggitt/fmttools"
-description = "Non-allocating utilities for manipulating string data while formatting"
+description = "Tools for modifying text without allocating any intermediate buffers or unsafe code"
 keywords = ["formatting", "iterator", "join", "replace"]
 categories = ["algorithms", "rust-patterns"]
-
+readme = "README.md"
 
 [dependencies]

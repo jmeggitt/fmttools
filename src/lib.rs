@@ -45,8 +45,10 @@
 //! ```
 #![forbid(unsafe_code)]
 
+pub mod fmt_with;
 pub mod join;
 pub mod replace;
 
+pub use fmt_with::{DebugWith, DisplayWith, ToFormatWith};
 pub use join::{join, join_fmt, join_fmt_all};
 pub use replace::replace;

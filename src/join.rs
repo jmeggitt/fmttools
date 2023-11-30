@@ -2,9 +2,9 @@ use std::cell::Cell;
 use std::fmt;
 use std::fmt::{Debug, Display, Formatter};
 
-pub struct Join<I, S> {
+pub struct Join<'a, I> {
     iter: Cell<Option<I>>,
-    separator: S,
+    separator: &'a str,
 }
 
 /// Joins iterator elements together with a given separator. Formatting is only performed during
@@ -13,7 +13,7 @@ pub struct Join<I, S> {
 /// use fmttools::join;
 ///
 /// let elements = vec![1, 2, 3, 4, 5];
-/// assert_eq!("1:2:3:4:5", format!("{}", join(&elements, ':')));
+/// assert_eq!("1:2:3:4:5", format!("{}", join(&elements, ":")));
 /// ```
 ///
 /// ## Note
@@ -29,18 +29,17 @@ pub struct Join<I, S> {
 ///
 /// See [join_fmt] and [join_fmt_all] for additional control over element and separator formatting.
 #[inline]
-pub fn join<I: IntoIterator, S: Display>(iter: I, separator: S) -> Join<I::IntoIter, S> {
+pub fn join<I: IntoIterator>(iter: I, separator: &str) -> Join<I::IntoIter> {
     Join {
         iter: Cell::new(Some(iter.into_iter())),
         separator,
     }
 }
 
-impl<I, S> Debug for Join<I, S>
+impl<I> Debug for Join<'_, I>
 where
     I: Iterator,
     <I as Iterator>::Item: Debug,
-    S: Display,
 {
     #[inline]
     #[track_caller]
@@ -56,7 +55,7 @@ where
         }
 
         for item in item_iter {
-            <S as Display>::fmt(&self.separator, f)?;
+            f.write_str(self.separator)?;
             <I::Item as Debug>::fmt(&item, f)?;
         }
 
@@ -64,11 +63,10 @@ where
     }
 }
 
-impl<I, S> Display for Join<I, S>
+impl<I> Display for Join<'_, I>
 where
     I: Iterator,
     <I as Iterator>::Item: Display,
-    S: Display,
 {
     #[inline]
     #[track_caller]
@@ -84,7 +82,7 @@ where
         }
 
         for item in item_iter {
-            <S as Display>::fmt(&self.separator, f)?;
+            f.write_str(self.separator)?;
             <I::Item as Display>::fmt(&item, f)?;
         }
 

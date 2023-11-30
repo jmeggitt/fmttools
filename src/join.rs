@@ -50,21 +50,17 @@ where
             None => panic!("Join can only be used once"),
         };
 
-        let mut previous_item = match item_iter.next() {
-            Some(value) => value,
+        match item_iter.next() {
+            Some(value) => <I::Item as Debug>::fmt(&value, f)?,
             None => return Ok(()),
-        };
-
-        loop {
-            match item_iter.next() {
-                Some(next_item) => {
-                    <I::Item as Debug>::fmt(&previous_item, f)?;
-                    <S as Display>::fmt(&self.separator, f)?;
-                    previous_item = next_item;
-                }
-                None => return <I::Item as Debug>::fmt(&previous_item, f),
-            }
         }
+
+        for item in item_iter {
+            <S as Display>::fmt(&self.separator, f)?;
+            <I::Item as Debug>::fmt(&item, f)?;
+        }
+
+        Ok(())
     }
 }
 
@@ -82,21 +78,17 @@ where
             None => panic!("Join can only be used once"),
         };
 
-        let mut previous_item = match item_iter.next() {
-            Some(value) => value,
+        match item_iter.next() {
+            Some(value) => <I::Item as Display>::fmt(&value, f)?,
             None => return Ok(()),
-        };
-
-        loop {
-            match item_iter.next() {
-                Some(next_item) => {
-                    <I::Item as Display>::fmt(&previous_item, f)?;
-                    <S as Display>::fmt(&self.separator, f)?;
-                    previous_item = next_item;
-                }
-                None => return <I::Item as Display>::fmt(&previous_item, f),
-            }
         }
+
+        for item in item_iter {
+            <S as Display>::fmt(&self.separator, f)?;
+            <I::Item as Display>::fmt(&item, f)?;
+        }
+
+        Ok(())
     }
 }
 

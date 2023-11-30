@@ -33,7 +33,7 @@ let elements = vec![1, 2, 3, 4, 5];
 assert_eq!("1, 2, 3, 3+, 3+", format!("{}", join_fmt(&elements, ", ", format_element)));
 ```
 
-## Replace arbitrary patterns
+### Replace arbitrary patterns
 ```rust
 use fmttools::replace;
 
@@ -44,6 +44,43 @@ struct FooBar {
 
 let value = FooBar { a: "Bar".to_string() };
 assert_eq!("FooBiz { a: \"Biz\" }", format!("{:?}", replace(&value, "Bar", "Biz")));
+```
+
+### Format with extra data
+```rust
+use fmttools::{DebugWith, ToFormatWith};
+
+type RegistryKey = u32;
+
+struct Registry {
+    key_names: HashMap<RegistryKey, String>,
+}
+
+struct FooEntry {
+    key: RegistryKey,
+}
+
+impl DebugWith<Registry> for FooEntry {
+    fn fmt(&self, f: &mut Formatter<'_>, registry: &Registry) -> fmt::Result {
+        let key_name = registry.key_names.get(&self.key)
+            .map(|x| x.as_str())
+            .unwrap_or("unknown");
+
+        write!(f, "FooEntry {{ key: {:?} }}", key_name)
+    }
+}
+
+let registry = Registry {
+    key_names: HashMap::from([
+        (2, "FooA".to_string()),
+        (5, "FooB".to_string()),
+        (9, "Bar".to_string()),
+    ]),
+};
+
+let entry = FooEntry { key: 5 };
+
+assert_eq!("FooEntry { key: \"FooB\" }", format!("{:?}", entry.fmt_with(&registry)));
 ```
 
 ## License

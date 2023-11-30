@@ -80,6 +80,25 @@ fn fmttools_join<W: Write>(out: &mut W, input: &[&str]) -> fmt::Result {
     write!(out, "{}", fmttools::join(input, ", "))
 }
 
+fn naive_join<W: Write>(out: &mut W, input: &[&str]) -> fmt::Result {
+    write!(out, "{}", input.join(", "))
+}
+
+/// Skip the overhead of the write! macro and just write strings directly
+fn direct<W: Write>(out: &mut W, input: &[&str]) -> fmt::Result {
+    let mut iter = input.iter();
+    if let Some(item) = iter.next() {
+        out.write_str(item)?;
+
+        for item in iter {
+            out.write_str(", ")?;
+            out.write_str(item)?;
+        }
+    }
+
+    Ok(())
+}
+
 fn bench_fn<F>(func: F) -> impl Fn(&mut Bencher, &[&str])
 where
     F: Fn(&mut String, &[&str]) -> fmt::Result,
@@ -103,6 +122,8 @@ fn run_group_for_input(mut c: BenchmarkGroup<WallTime>, input: &[&str]) {
     c.bench_with_input("shepmaster_iter", input, bench_fn(shepmaster_iter));
     c.bench_with_input("itertools_format", input, bench_fn(itertools_format));
     c.bench_with_input("fmttools_join", input, bench_fn(fmttools_join));
+    c.bench_with_input("naive_join", input, bench_fn(naive_join));
+    c.bench_with_input("direct", input, bench_fn(direct));
 }
 
 fn criterion_benchmark(c: &mut Criterion) {

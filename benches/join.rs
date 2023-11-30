@@ -1,5 +1,5 @@
 use criterion::measurement::WallTime;
-use criterion::{criterion_group, criterion_main, Bencher, BenchmarkGroup, Criterion};
+use criterion::{black_box, criterion_group, criterion_main, Bencher, BenchmarkGroup, Criterion};
 use itertools::Itertools;
 use rand::{Rng, SeedableRng};
 use rand_chacha::ChaChaRng;
@@ -7,7 +7,7 @@ use std::fmt;
 use std::fmt::Write;
 
 /// Source: https://stackoverflow.com/a/26647446
-fn levans_iterators<W: Write>(out: &mut W, input: &[&str]) -> fmt::Result {
+fn levans_iterators(out: &mut dyn Write, input: &[&str]) -> fmt::Result {
     for e in input.iter().take(1) {
         write!(out, "{}", e)?;
     }
@@ -20,7 +20,7 @@ fn levans_iterators<W: Write>(out: &mut W, input: &[&str]) -> fmt::Result {
 }
 
 /// Source: https://stackoverflow.com/a/26647446
-fn levans_fold<W: Write>(out: &mut W, input: &[&str]) -> fmt::Result {
+fn levans_fold(out: &mut dyn Write, input: &[&str]) -> fmt::Result {
     input.iter().try_fold(true, |first, elem| {
         if !first {
             write!(out, ", ")?;
@@ -33,7 +33,7 @@ fn levans_fold<W: Write>(out: &mut W, input: &[&str]) -> fmt::Result {
 }
 
 /// Source: https://stackoverflow.com/a/45134036
-fn shepmaster_iter<W: Write>(out: &mut W, input: &[&str]) -> fmt::Result {
+fn shepmaster_iter(out: &mut dyn Write, input: &[&str]) -> fmt::Result {
     let mut iter = input.iter();
     if let Some(item) = iter.next() {
         write!(out, "{}", item)?;
@@ -46,12 +46,12 @@ fn shepmaster_iter<W: Write>(out: &mut W, input: &[&str]) -> fmt::Result {
     Ok(())
 }
 
-fn itertools_format<W: Write>(out: &mut W, input: &[&str]) -> fmt::Result {
+fn itertools_format(out: &mut dyn Write, input: &[&str]) -> fmt::Result {
     write!(out, "{}", input.iter().format(", "))
 }
 
 /// Source: https://stackoverflow.com/a/26644600
-fn chris_morgan<W: Write>(out: &mut W, input: &[&str]) -> fmt::Result {
+fn chris_morgan(out: &mut dyn Write, input: &[&str]) -> fmt::Result {
     let mut first = true;
     for item in input {
         if !first {
@@ -65,7 +65,7 @@ fn chris_morgan<W: Write>(out: &mut W, input: &[&str]) -> fmt::Result {
 }
 
 /// Source: https://stackoverflow.com/a/63878278
-fn zombo<W: Write>(out: &mut W, input: &[&str]) -> fmt::Result {
+fn zombo(out: &mut dyn Write, input: &[&str]) -> fmt::Result {
     for (n, s) in input.iter().enumerate() {
         if n > 0 {
             write!(out, ", ")?;
@@ -76,16 +76,16 @@ fn zombo<W: Write>(out: &mut W, input: &[&str]) -> fmt::Result {
     Ok(())
 }
 
-fn fmttools_join<W: Write>(out: &mut W, input: &[&str]) -> fmt::Result {
+fn fmttools_join(out: &mut dyn Write, input: &[&str]) -> fmt::Result {
     write!(out, "{}", fmttools::join(input, ", "))
 }
 
-fn naive_join<W: Write>(out: &mut W, input: &[&str]) -> fmt::Result {
+fn naive_join(out: &mut dyn Write, input: &[&str]) -> fmt::Result {
     write!(out, "{}", input.join(", "))
 }
 
 /// Skip the overhead of the write! macro and just write strings directly
-fn direct<W: Write>(out: &mut W, input: &[&str]) -> fmt::Result {
+fn direct(out: &mut dyn Write, input: &[&str]) -> fmt::Result {
     let mut iter = input.iter();
     if let Some(item) = iter.next() {
         out.write_str(item)?;
@@ -101,7 +101,7 @@ fn direct<W: Write>(out: &mut W, input: &[&str]) -> fmt::Result {
 
 fn bench_fn<F>(func: F) -> impl Fn(&mut Bencher, &[&str])
 where
-    F: Fn(&mut String, &[&str]) -> fmt::Result,
+    F: Fn(&mut dyn Write, &[&str]) -> fmt::Result,
 {
     move |b, input| {
         let buffer_size = input.iter().map(|x| x.len()).sum::<usize>() + 2 * input.len();
@@ -109,7 +109,8 @@ where
 
         b.iter(|| {
             buffer.clear();
-            func(&mut buffer, input).unwrap();
+            let dyn_buffer: &mut dyn Write = black_box(&mut buffer);
+            func(dyn_buffer, input).unwrap();
         })
     }
 }
